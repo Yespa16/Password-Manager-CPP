@@ -1,7 +1,32 @@
-#include <string>
-#include <iostream>
-#include "user.h"
 #include "password.h"
+
+
+
+PasswordGroup::PasswordGroup(): user(nullptr), name("") {};
+
+PasswordGroup::PasswordGroup(User* _user, std::string _name): user(_user), name(_name){};
+
+PasswordGroup::~PasswordGroup() {user = nullptr;}
+
+void PasswordGroup::set_id(int _id){
+    id = _id;
+}
+
+int PasswordGroup::get_id(){
+    return id;
+}
+
+std::string PasswordGroup::get_name(){
+    return name;
+}
+
+void PasswordGroup::set_name(std::string _name) {
+    name = _name;
+}
+
+void PasswordGroup::set_user(User* u){
+    user = u;
+}
 
 
 Password::Password(User* _u, std::string _email, std::string _username, PasswordGroup* _group, std::string _password) {
@@ -23,3 +48,5 @@ Password::~Password(){
         user = nullptr;
         group = nullptr;
     }
+
+

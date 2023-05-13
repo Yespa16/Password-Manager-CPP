@@ -6,7 +6,21 @@
 
 class PasswordGroup{
 private:
+    int id;
+    User* user;
     std::string name;
+
+public:
+    PasswordGroup();
+    PasswordGroup(User* _user, std::string _name);
+    ~PasswordGroup();
+
+
+    int get_id();
+    void set_id(int _id);
+    void set_user(User*);
+    std::string get_name();
+    void set_name(std::string);
 };
 
 
