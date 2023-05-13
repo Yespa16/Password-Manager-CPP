@@ -1,6 +1,9 @@
 #Visual Studio Code
 .vscode/
 
+#Databases
+*.db
+
 
 # Prerequisites
 *.d
