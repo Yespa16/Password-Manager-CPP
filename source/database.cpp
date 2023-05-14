@@ -4,11 +4,19 @@
 
 User USER;
 PasswordGroup GROUP;
+int GROUP_COUNT;
+std::vector<PasswordGroup> GROUP_LIST;
+std::vector<Password> PASSWORD_LIST;
 
 
 int get_user_callback(void* notUsed, int argc, char** argv, char** col_name);
 
 int get_group_callback(void* notUsed, int argc, char** argv, char** col_name);
+
+int get_all_groups_callback(void* notUsed, int argc, char** argv, char** col_name);
+
+int get_all_passwords_callback(void* notUsed, int argc, char** argv, char** col_name);
+
 
 void create_db(const char* dir, sqlite3* var) {
     sqlite3* DB;
@@ -82,12 +90,13 @@ int create_password_group_table(sqlite3* db) {
 int create_password_table(sqlite3* db){
         sqlite3* DB;
         std::string command = "CREATE TABLE IF NOT EXISTS password("
+                "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                 "user_id INTEGER,"
                 "app VARCHAR(50),"
-                "group_id INTEGER"
+                "group_id INTEGER,"
                 "username VARCHAR(50),"
                 "email VARCHAR(100),"
-                "password VARCHAR(50),"
+                "password VARCHAR(50)"
         ") ";
 
     try{
@@ -154,7 +163,6 @@ int add_group(PasswordGroup& pg) {
 
     try{
         int exit = sqlite3_open("database.db", &DB);
-        std::cout << "DATABASE OPENED"; 
         char* messageError;
         exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
 
@@ -179,6 +187,64 @@ void get_group(std::string name) {
     std::string command = "SELECT * FROM password_group WHERE name='" + name + "'";
 
     exit = sqlite3_exec(DB, command.c_str(), get_group_callback, NULL, NULL);
+
+    sqlite3_close(DB);
+}
+
+
+void get_all_groups(User& user){
+    sqlite3* DB;
+    std::string user_id = std::to_string( user.get_id() );
+    int exit = sqlite3_open("database.db", &DB);
+    std::string command = "SELECT * FROM password_group WHERE user_id=" + user_id;
+    exit = sqlite3_exec(DB, command.c_str(), get_all_groups_callback, NULL, NULL);
+
+    sqlite3_close(DB);
+}
+
+
+
+int add_password(Password& p){
+    sqlite3* DB;
+    std::string user_id = std::to_string( p.get_user()->get_id() );
+    std::string group_id = std::to_string( p.get_group()->get_id() );
+    std::string app = p.get_app();
+    std::string email = p.get_email();
+    std::string username = p.get_username();
+    std::string password = p.get_password();
+    std::string command = "INSERT INTO password (user_id, group_id, app, email, username, password) VALUES(" + user_id + ", " + group_id + ", '" + app +"', '" + email + "', '"+ username +"', '" + password + " ');";
+    
+    try{
+        int exit = 0;
+        exit = sqlite3_open("database.db", &DB);
+        char* messageError;
+        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
+
+        if (exit != SQLITE_OK){
+            std::cout << "Couldn't add Password "<< std::endl;
+            sqlite3_free(messageError);
+        }else{
+            std::cout << "Password was added successfully!"<< std::endl;
+        }
+    }catch (const std::exception& e) {
+        std::cout << e.what() << std::endl;
+        return 1;
+    }
+    sqlite3_close(DB);
+    return 0;
+
+}
+
+
+void get_all_passwords(User& user){
+    sqlite3* DB;
+    std::string user_id = std::to_string( user.get_id() );
+    int exit = sqlite3_open("database.db", &DB);
+    std::string command = "SELECT * FROM password WHERE user_id=" + user_id;
+
+    exit = sqlite3_exec(DB, command.c_str(), get_all_passwords_callback, NULL, NULL);
+
+    sqlite3_close(DB);
 }
 
 
@@ -194,7 +260,32 @@ int get_user_callback(void* notUsed, int argc, char** argv, char** col_name){
 
 int get_group_callback(void* notUsed, int argc, char** argv, char** col_name){
     GROUP.set_id(atoi(argv[0]));
+    GROUP.set_user(&USER);
     GROUP.set_name(argv[1]);
 
+    return 0;
+}
+
+
+int get_all_groups_callback(void* notUsed, int argc, char** argv, char** col_name){
+    PasswordGroup pg;
+    pg.set_id( atoi(argv[0]) );
+    pg.set_user(&USER);
+    pg.set_name(argv[2]);
+    GROUP_LIST.push_back(pg);
+    return 0;
+}
+
+
+int get_all_passwords_callback(void* notUsed, int argc, char** argv, char** col_name){
+    Password p;
+    p.set_id (atoi(argv[0]));
+    p.set_user(&USER);
+    p.set_app(argv[2]);
+    p.set_group(&GROUP);
+    p.set_username(argv[4]);
+    p.set_email(argv[5]);
+    p.set_password(argv[6]);
+    PASSWORD_LIST.push_back(p);
     return 0;
 }
