@@ -63,7 +63,7 @@ int create_password_group_table(sqlite3* db) {
     std::string command = "CREATE TABLE IF NOT EXISTS password_group("
         "id INTEGER PRIMARY KEY AUTOINCREMENT, "
         "user_id INTEGER,"
-        "name VARCHAR(100) unique"
+        "name VARCHAR(100)"
     "); ";
 
     try{
