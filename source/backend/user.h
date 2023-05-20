@@ -11,6 +11,8 @@ private:
   std::string password;
   std::string pin;
 
+  int validate(std::string username, std::string password, std::string pin, int id);
+
 public:
   User();
   User(std::string _u, std::string _p, std::string _pin, int _id = 0);
@@ -25,6 +27,4 @@ public:
   void set_username(const char *);
   void set_password(const char *);
   void set_pin(const char *);
-
-  int validate(std::string username, std::string password, std::string pin, int id);
 };
