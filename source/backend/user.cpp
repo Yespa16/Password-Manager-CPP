@@ -30,7 +30,7 @@ int User::validate(std::string username, std::string password, std::string pin, 
   return 0;
 }
 
-std::string User::hash(std::string text)
+std::string& User::hash(std::string& text)
 {
   // Implement hash algorithm later
   return text;
@@ -41,17 +41,17 @@ int User::get_id()
   return id;
 }
 
-std::string User::get_username()
+std::string& User::get_username()
 {
   return username;
 }
 
-std::string User::get_password()
+std::string& User::get_password()
 {
   return password;
 }
 
-std::string User::get_pin()
+std::string& User::get_pin()
 {
   return pin;
 }
@@ -63,15 +63,17 @@ void User::set_id(int _id)
 
 void User::set_username(const char *u)
 {
-  username = u;
+  username = std::move(u);
 }
 
 void User::set_password(const char *p)
 {
-  password = hash(p);
+  std::string sp(p);
+  password = hash(sp);
+
 }
 
 void User::set_pin(const char *_pin)
 {
-  pin = _pin;
+  pin = std::move(_pin);
 }
