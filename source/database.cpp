@@ -2,103 +2,53 @@
 #include <string>
 #include <iostream>
 
-User USER;
-PasswordGroup GROUP;
-int GROUP_COUNT;
-std::vector<PasswordGroup> GROUP_LIST;
-std::vector<Password> PASSWORD_LIST;
+
+Data Data::instance;
+
 
 int get_user_callback(void *notUsed, int argc, char **argv, char **col_name);
-
 int get_group_callback(void *notUsed, int argc, char **argv, char **col_name);
-
 int get_all_groups_callback(void *notUsed, int argc, char **argv, char **col_name);
-
 int get_all_passwords_callback(void *notUsed, int argc, char **argv, char **col_name);
 
-void create_db(const char *dir, sqlite3 *var)
+
+
+DatabaseClass::~DatabaseClass() {
+    DB = nullptr;
+}
+
+
+
+void DatabaseClass::create_db()
 {
-    sqlite3 *DB;
-    int exit = 0;
-    exit = sqlite3_open(dir, &DB);
+    int exit = sqlite3_open(dir, &DB);
     sqlite3_close(DB);
 }
 
-int create_user_table(sqlite3 *db)
+int DatabaseClass::create_user_table()
 {
-    sqlite3 *DB;
+
     std::string command = "CREATE TABLE IF NOT EXISTS user("
                           "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                           "username VARCHAR(100) unique, "
                           "password VARCHAR(100), "
                           "pin VARCHAR(4) );";
 
-    try
-    {
-        int exit = 0;
-        exit = sqlite3_open("database.db", &DB);
-        std::cout << "Database opened \n";
-        char *messageError;
-        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
 
-        if (exit != SQLITE_OK)
-        {
-            std::cout << "Couldn't create User table";
-            std::cout << messageError << std::endl;
-            sqlite3_free(messageError);
-        }
-        else
-        {
-            std::cout << "User table created successfully" << std::endl;
-        }
-    }
-    catch (const std::exception &e)
+    int exit = 0;
+    exit = sqlite3_open(dir, &DB);
+    exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &error_message);
+
+    if (exit != SQLITE_OK)
     {
-        std::cout << e.what() << std::endl;
-        return 1;
+        throw 1;
     }
     sqlite3_close(DB);
     return 0;
 }
 
-int create_password_group_table(sqlite3 *db)
+int DatabaseClass::create_password_table()
 {
-    sqlite3 *DB;
-    std::string command = "CREATE TABLE IF NOT EXISTS password_group("
-                          "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                          "user_id INTEGER,"
-                          "name VARCHAR(100)"
-                          "); ";
-
-    try
-    {
-        int exit = sqlite3_open("database.db", &DB);
-        char *messageError;
-        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
-
-        if (exit != SQLITE_OK)
-        {
-            std::cout << "Couldn't create Group table" << std::endl;
-            std::cout << messageError;
-            sqlite3_free(messageError);
-        }
-        else
-        {
-            std::cout << "Group table created successfully" << std::endl;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        return 1;
-    }
-    sqlite3_close(DB);
-    return 0;
-}
-
-int create_password_table(sqlite3 *db)
-{
-    sqlite3 *DB;
     std::string command = "CREATE TABLE IF NOT EXISTS password("
                           "id INTEGER PRIMARY KEY AUTOINCREMENT, "
                           "user_id INTEGER,"
@@ -106,170 +56,67 @@ int create_password_table(sqlite3 *db)
                           "group_id INTEGER,"
                           "username VARCHAR(50),"
                           "email VARCHAR(100),"
-                          "password VARCHAR(50)"
+                          "password VARCHAR(50),"
+                          "phone_number VARCHAR(50),"
+                          "reserve_email VARCHAR(50),"
+                          "level VARCHAR(50),"
+                          "description TEXT"
                           ") ";
 
-    try
-    {
-        int exit = sqlite3_open("database.db", &DB);
-        char *messageError;
-        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
+    int exit = sqlite3_open("database.db", &DB);
+    exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &error_message);
 
-        if (exit != SQLITE_OK)
-        {
-            std::cout << "Couldn't create Password table " << std::endl;
-            sqlite3_free(messageError);
-        }
-        else
-        {
-            std::cout << "Password table created successfully" << std::endl;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        return 1;
+    if (exit != SQLITE_OK){
+        throw 1;
     }
     sqlite3_close(DB);
     return 0;
 }
 
-int create_user(User &user)
-{
-    sqlite3 *DB;
+int DatabaseClass::create_user(User &user){
+
     std::string username = user.get_username();
     std::string password = user.get_password();
     std::string pin = user.get_pin();
     std::string command = "INSERT INTO user (username, password, pin) VALUES('" + username + "', '" + password + "', '" + pin + "' );";
-    try
-    {
-        int exit = 0;
-        exit = sqlite3_open("database.db", &DB);
-        char *messageError;
-        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
+    int exit = 0;
+    exit = sqlite3_open(dir, &DB);
+    exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &error_message);
 
         if (exit != SQLITE_OK)
         {
-            std::cout << "Couldn't add the User " << std::endl;
-            sqlite3_free(messageError);
+            throw 1;
         }
-        else
-        {
-            std::cout << "User was added successfully!" << std::endl;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        return 1;
-    }
     sqlite3_close(DB);
     return 0;
 }
 
-void get_user(std::string username)
+void DatabaseClass::get_user(const std::string username)
 {
-    sqlite3 *DB;
-    int exit = sqlite3_open("database.db", &DB);
+    int exit = sqlite3_open(dir, &DB);
     std::string command = "SELECT * FROM user WHERE username='" + username + "'";
 
     exit = sqlite3_exec(DB, command.c_str(), get_user_callback, NULL, NULL);
 }
 
-int add_group(PasswordGroup &pg)
+int DatabaseClass::add_password(Password* p)
 {
-    sqlite3 *DB;
-    std::string name = pg.get_name();
-    std::string uid = std::to_string(USER.get_id());
-    std::string command = "INSERT INTO password_group (user_id, name) VALUES(" + uid + ", '" + name + "')";
+    std::string command = p->add_sql();
 
-    try
-    {
-        int exit = sqlite3_open("database.db", &DB);
-        char *messageError;
-        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
+    int exit = 0;
+    exit = sqlite3_open("database.db", &DB);
 
-        if (exit != SQLITE_OK)
-        {
-            std::cout << "Couldn't add PasswordGroup  " << std::endl;
-            sqlite3_free(messageError);
+    exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &error_message);
+
+        if (exit != SQLITE_OK){
+            throw 1;
         }
-        else
-        {
-            std::cout << "PasswordGroup added successfully" << std::endl;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        return 1;
-    }
     sqlite3_close(DB);
     return 0;
 }
 
-void get_group(std::string name)
+void DatabaseClass::get_all_passwords(User& user)
 {
-    sqlite3 *DB;
-    int exit = sqlite3_open("database.db", &DB);
-    std::string command = "SELECT * FROM password_group WHERE name='" + name + "'";
-
-    exit = sqlite3_exec(DB, command.c_str(), get_group_callback, NULL, NULL);
-
-    sqlite3_close(DB);
-}
-
-void get_all_groups(User &user)
-{
-    sqlite3 *DB;
-    std::string user_id = std::to_string(user.get_id());
-    int exit = sqlite3_open("database.db", &DB);
-    std::string command = "SELECT * FROM password_group WHERE user_id=" + user_id;
-    exit = sqlite3_exec(DB, command.c_str(), get_all_groups_callback, NULL, NULL);
-
-    sqlite3_close(DB);
-}
-
-int add_password(Password &p)
-{
-    sqlite3 *DB;
-    std::string user_id = std::to_string(p.get_user()->get_id());
-    std::string group_id = std::to_string(p.get_group()->get_id());
-    std::string app = p.get_app();
-    std::string email = p.get_email();
-    std::string username = p.get_username();
-    std::string password = p.get_password();
-    std::string command = "INSERT INTO password (user_id, group_id, app, email, username, password) VALUES(" + user_id + ", " + group_id + ", '" + app + "', '" + email + "', '" + username + "', '" + password + " ');";
-
-    try
-    {
-        int exit = 0;
-        exit = sqlite3_open("database.db", &DB);
-        char *messageError;
-        exit = sqlite3_exec(DB, command.c_str(), NULL, 0, &messageError);
-
-        if (exit != SQLITE_OK)
-        {
-            std::cout << "Couldn't add Password " << std::endl;
-            sqlite3_free(messageError);
-        }
-        else
-        {
-            std::cout << "Password was added successfully!" << std::endl;
-        }
-    }
-    catch (const std::exception &e)
-    {
-        std::cout << e.what() << std::endl;
-        return 1;
-    }
-    sqlite3_close(DB);
-    return 0;
-}
-
-void get_all_passwords(User &user)
-{
-    sqlite3 *DB;
     std::string user_id = std::to_string(user.get_id());
     int exit = sqlite3_open("database.db", &DB);
     std::string command = "SELECT * FROM password WHERE user_id=" + user_id;
@@ -281,43 +128,20 @@ void get_all_passwords(User &user)
 
 int get_user_callback(void *notUsed, int argc, char **argv, char **col_name)
 {
-    USER.set_id(atoi(argv[0]));
-    USER.set_username(argv[1]);
-    USER.set_password(argv[2]);
-    USER.set_pin(argv[3]);
-
-    return 0;
-}
-
-int get_group_callback(void *notUsed, int argc, char **argv, char **col_name)
-{
-    GROUP.set_id(atoi(argv[0]));
-    GROUP.set_user(&USER);
-    GROUP.set_name(argv[1]);
-
-    return 0;
-}
-
-int get_all_groups_callback(void *notUsed, int argc, char **argv, char **col_name)
-{
-    PasswordGroup pg;
-    pg.set_id(atoi(argv[0]));
-    pg.set_user(&USER);
-    pg.set_name(argv[2]);
-    GROUP_LIST.push_back(pg);
+    Data::GET_USER().set_id(atoi(argv[0]));
+    Data::GET_USER().set_username(argv[1]);
+    Data::GET_USER().set_password(argv[2]);
+    Data::GET_USER().set_pin(argv[3]);
     return 0;
 }
 
 int get_all_passwords_callback(void *notUsed, int argc, char **argv, char **col_name)
 {
-    Password p;
-    p.set_id(atoi(argv[0]));
-    p.set_user(&USER);
-    p.set_app(argv[2]);
-    p.set_group(&GROUP);
-    p.set_username(argv[4]);
-    p.set_email(argv[5]);
-    p.set_password(argv[6]);
-    PASSWORD_LIST.push_back(p);
+    Password* p = new Password;
+    p->set_id(atoi(argv[0]));
+    p->set_user(&Data::GET_USER());
+    p->set_app(argv[2]);
+    p->set_password(argv[6]);
+    Data::GET_PASSWORD_LIST().push_back(p);
     return 0;
 }

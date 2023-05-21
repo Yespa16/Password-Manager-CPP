@@ -1,27 +1,28 @@
 #include "database.h"
 
-extern User USER;
-extern PasswordGroup GROUP;
-extern std::vector<PasswordGroup> GROUP_LIST;
-extern std::vector<Password> PASSWORD_LIST;
+
 
 int main() {
-    const char *dir = "./database.db";
     sqlite3* DB;
-    create_db(dir, DB);
-    create_user_table(DB);
-    create_password_group_table(DB);
-    create_password_table(DB);
-    User u("Yespa", "EDO", "1537");
-    create_user(u);
-    get_user("Yespa");
-    PasswordGroup pg(&USER, "GROUP2");
-    add_group(pg);
-    Password p(&USER, "app", "email1", "userna1me", &GROUP, "P1assword123");
-    add_password(p);
-    Password p2(&USER, "app", "email1", "userna1me", &GROUP, "P1assword123"); 
+    DatabaseClass db("database.db", DB);
+    User u("Yespa", "USER PASSWORD", "1547", 1);
+    Password p(&u, "apppp", "generalp", 1);
+    try{
+    db.create_db();
+    db.create_user_table();
+    db.create_password_table();
+
+    // db.create_user(u);
+    db.add_password(&p);
+    db.get_user("Yespa");
+    std::cout << Data::GET_USER().get_password();
+    } catch(int e) {
+        std::cout << db.error_message;
+    }
+    EmailPassword ep(&u, "emailapp", "password", 1, "email", "+374", "reserve");
+    GamePassword gp(&u, "appasd", "password", 1, "username", "email", "level 1", "desc");
+
+
     
-    get_all_groups(USER);
-    get_all_passwords(USER);
     return 0;
 }
